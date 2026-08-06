@@ -384,9 +384,35 @@
    * os seletores dos players com login não dá pra verificar de fora, então o
    * caminho real de manutenção é ler os candidatos daqui.
    */
+  /**
+   * Estado do player no momento do stall. Sem isto o dump acusa os seletores
+   * mesmo quando o motivo é outro (nenhum <video> encontrado, toggle desligado,
+   * anúncio parado) — e aí a lista de botões só atrapalha o diagnóstico.
+   */
+  function stallStateLine() {
+    const parts = [];
+    const video = state.video;
+    if (!video) {
+      parts.push('nenhum <video> encontrado (videoSelectors podem ter mudado)');
+    } else {
+      const dur = Number.isFinite(video.duration) ? video.duration.toFixed(1) : String(video.duration);
+      parts.push(`vídeo ${video.currentTime.toFixed(1)}s/${dur}s`);
+      parts.push(video.paused ? 'pausado' : 'tocando');
+      parts.push(`${video.playbackRate}x`);
+      if (video.muted) parts.push('mudo');
+    }
+    const off = ['clickSkipButton', 'fastForwardUnskippable', 'muteDuringAds'].filter((k) => !can(k));
+    if (off.length) parts.push(`desligados: ${off.join(', ')}`);
+    return parts.join(' · ');
+  }
+
   function warnStalledAd() {
     const roots = (adapter.skipFallbackRoots || []).concat(adapter.playerSelectors || []);
     const candidates = [];
+    // Um mesmo botão cai em vários roots (#movie_player e .html5-video-player são
+    // o mesmo nó, e os containers de anúncio ficam dentro do player): sem dedupe
+    // o dump sai repetido inteiro, o que já aconteceu.
+    const seen = new Set();
     for (const rootSel of roots) {
       let root;
       try {
@@ -396,7 +422,12 @@
       }
       if (!root) continue;
       for (const el of queryAll(['button', '[role="button"]'], root)) {
+        if (seen.has(el)) continue;
+        seen.add(el);
         candidates.push({
+          // Os roots de anúncio vêm antes dos do player na lista, então o
+          // primeiro que casar é o mais específico — é o que interessa saber.
+          raiz: rootSel,
           seletor: describe(el),
           texto: (el.textContent || '').trim().slice(0, 60),
           rotulo: (el.getAttribute('aria-label') || '').slice(0, 60),
@@ -404,14 +435,14 @@
         });
       }
     }
-    // O dump vai também como texto, não só como array: o array o DevTools mostra
+    // Só texto, nunca o array de objetos junto: o DevTools mostra o array
     // expansível, mas copiar a linha achata tudo em "[object Object]" — e copiar
     // é exatamente o que se faz com esse dump (colar num issue, num commit, aqui).
     const tabela = candidates.length
       ? candidates
           .map(
             (c, i) =>
-              `  ${i + 1}. ${c.clicavel ? 'clicável ' : 'oculto   '} ${c.seletor}` +
+              `  ${i + 1}. ${c.clicavel ? 'clicável ' : 'oculto   '} ${c.raiz} » ${c.seletor}` +
               (c.texto ? `\n       texto:  "${c.texto}"` : '') +
               (c.rotulo ? `\n       rótulo: "${c.rotulo}"` : ''),
           )
@@ -421,10 +452,10 @@
 
     console.warn(
       `[Pula:${adapter.id}] anúncio ativo há mais de ${CONFIG.stallWarnMs}ms e nada resolveu.\n` +
-        'Os seletores provavelmente mudaram. Os candidatos abaixo saíram dos containers de ' +
-        `anúncio e do player; adicione o certo no topo de skipButtonSelectors em ` +
-        `adapters/${adapter.id}.js.\n${tabela}`,
-      candidates,
+        `Estado: ${stallStateLine()}\n` +
+        'Se algum candidato abaixo for o botão de pular, adicione-o no topo de ' +
+        `skipButtonSelectors em adapters/${adapter.id}.js. Candidatos, do container de ` +
+        `anúncio para o player:\n${tabela}`,
     );
   }
 
