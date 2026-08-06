@@ -385,7 +385,6 @@
    * caminho real de manutenção é ler os candidatos daqui.
    */
   function warnStalledAd() {
-    state.stallWarned = true;
     const roots = (adapter.skipFallbackRoots || []).concat(adapter.playerSelectors || []);
     const candidates = [];
     for (const rootSel of roots) {
@@ -405,10 +404,26 @@
         });
       }
     }
+    // O dump vai também como texto, não só como array: o array o DevTools mostra
+    // expansível, mas copiar a linha achata tudo em "[object Object]" — e copiar
+    // é exatamente o que se faz com esse dump (colar num issue, num commit, aqui).
+    const tabela = candidates.length
+      ? candidates
+          .map(
+            (c, i) =>
+              `  ${i + 1}. ${c.clicavel ? 'clicável ' : 'oculto   '} ${c.seletor}` +
+              (c.texto ? `\n       texto:  "${c.texto}"` : '') +
+              (c.rotulo ? `\n       rótulo: "${c.rotulo}"` : ''),
+          )
+          .join('\n')
+      : '  (nenhum botão dentro dos roots — os próprios skipFallbackRoots/playerSelectors ' +
+        'podem ter mudado)';
+
     console.warn(
-      `[Pula:${adapter.id}] anúncio ativo há mais de ${CONFIG.stallWarnMs}ms e nada resolveu. ` +
-        'Os seletores provavelmente mudaram — os candidatos abaixo saíram dos containers de ' +
-        `anúncio e do player; adicione o certo no topo de skipButtonSelectors em adapters/${adapter.id}.js.`,
+      `[Pula:${adapter.id}] anúncio ativo há mais de ${CONFIG.stallWarnMs}ms e nada resolveu.\n` +
+        'Os seletores provavelmente mudaram. Os candidatos abaixo saíram dos containers de ' +
+        `anúncio e do player; adicione o certo no topo de skipButtonSelectors em ` +
+        `adapters/${adapter.id}.js.\n${tabela}`,
       candidates,
     );
   }
@@ -660,7 +675,21 @@
         !state.stallWarned &&
         performance.now() - state.adSince > CONFIG.stallWarnMs
       ) {
-        warnStalledAd();
+        state.stallWarned = true;
+        // Passar de stallWarnMs não é sintoma por si só: o anúncio acelerado
+        // ainda toca até o fim, e no SSAI o bloco inteiro roda mutado. Nesses
+        // casos a extensão está funcionando, e um console.warn ali é falso
+        // alarme — o que o usuário vê na tela contradiz o que o console diz.
+        // Só é stall de verdade quando nada surtiu efeito.
+        const acted = handled || state.adCounted || state.mutedByUs;
+        if (acted) {
+          log(
+            `anúncio passou de ${CONFIG.stallWarnMs}ms, mas foi tratado ` +
+              `(${state.originalRate !== null ? 'acelerando' : state.adCounted ? 'pulado' : 'mutado'})`,
+          );
+        } else {
+          warnStalledAd();
+        }
       }
       return;
     }

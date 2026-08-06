@@ -1,10 +1,12 @@
 {
   "manifest_version": 3,
   "name": "__MSG_extName__",
-  "version": "2.0.0",
+  "version": "2.0.1",
   "description": "__MSG_extDescription__",
   "default_locale": "en",
-  "permissions": ["storage"],
+  "permissions": [
+    "storage"
+  ],
   "icons": {
     "16": "icons/icon16.png",
     "48": "icons/icon48.png",
@@ -21,14 +23,25 @@
   },
   "content_scripts": [
     {
-      "matches": ["*://*.youtube.com/*", "*://*.youtube-nocookie.com/*"],
-      "js": ["adapters/youtube.js", "core.js"],
+      "matches": [
+        "*://*.youtube.com/*",
+        "*://*.youtube-nocookie.com/*"
+      ],
+      "js": [
+        "adapters/youtube.js",
+        "core.js"
+      ],
       "run_at": "document_start",
       "all_frames": true
     },
     {
-      "matches": ["*://*.netflix.com/*"],
-      "js": ["adapters/netflix.js", "core.js"],
+      "matches": [
+        "*://*.netflix.com/*"
+      ],
+      "js": [
+        "adapters/netflix.js",
+        "core.js"
+      ],
       "run_at": "document_start",
       "all_frames": true
     },
@@ -38,43 +51,78 @@
         "*://*.amazon.com/gp/video/*",
         "*://*.amazon.com.br/gp/video/*"
       ],
-      "js": ["adapters/primevideo.js", "core.js"],
+      "js": [
+        "adapters/primevideo.js",
+        "core.js"
+      ],
       "run_at": "document_start",
       "all_frames": true
     },
     {
-      "matches": ["*://*.disneyplus.com/*", "*://*.starplus.com/*"],
-      "js": ["adapters/disneyplus.js", "core.js"],
+      "matches": [
+        "*://*.disneyplus.com/*",
+        "*://*.starplus.com/*"
+      ],
+      "js": [
+        "adapters/disneyplus.js",
+        "core.js"
+      ],
       "run_at": "document_start",
       "all_frames": true
     },
     {
-      "matches": ["*://*.max.com/*", "*://*.hbomax.com/*"],
-      "js": ["adapters/max.js", "core.js"],
+      "matches": [
+        "*://*.max.com/*",
+        "*://*.hbomax.com/*"
+      ],
+      "js": [
+        "adapters/max.js",
+        "core.js"
+      ],
       "run_at": "document_start",
       "all_frames": true
     },
     {
-      "matches": ["*://*.twitch.tv/*"],
-      "js": ["adapters/twitch.js", "core.js"],
+      "matches": [
+        "*://*.twitch.tv/*"
+      ],
+      "js": [
+        "adapters/twitch.js",
+        "core.js"
+      ],
       "run_at": "document_start",
       "all_frames": true
     },
     {
-      "matches": ["*://globoplay.globo.com/*"],
-      "js": ["adapters/globoplay.js", "core.js"],
+      "matches": [
+        "*://globoplay.globo.com/*"
+      ],
+      "js": [
+        "adapters/globoplay.js",
+        "core.js"
+      ],
       "run_at": "document_start",
       "all_frames": true
     },
     {
-      "matches": ["*://*.crunchyroll.com/*"],
-      "js": ["adapters/crunchyroll.js", "core.js"],
+      "matches": [
+        "*://*.crunchyroll.com/*"
+      ],
+      "js": [
+        "adapters/crunchyroll.js",
+        "core.js"
+      ],
       "run_at": "document_start",
       "all_frames": true
     },
     {
-      "matches": ["*://*.paramountplus.com/*"],
-      "js": ["adapters/paramountplus.js", "core.js"],
+      "matches": [
+        "*://*.paramountplus.com/*"
+      ],
+      "js": [
+        "adapters/paramountplus.js",
+        "core.js"
+      ],
       "run_at": "document_start",
       "all_frames": true
     }
