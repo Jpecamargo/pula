@@ -145,6 +145,37 @@
    */
   const SKIP_FALLBACK_ROOTS = ['.video-player__container', '[data-a-target="video-player"]'];
 
+  /**
+   * Botão de "pular anúncio" — para os blocos em que o site oferece um.
+   *
+   * O grosso do inventário daqui é SSAI, onde esse botão não existe: nesses
+   * blocos as queries abaixo não casam nada, o pipeline segue pro mute e o
+   * custo é uma query que falha. Mas alguns formatos (anúncio interativo,
+   * pré-roll de parceiro) trazem botão de verdade, e aí clicar é exatamente o
+   * gesto que o usuário faria com o mouse. Não tentar perde o clique quando ele
+   * existe; tentar não perde nada quando não existe.
+   *
+   * SELETORES SÃO PALPITE — nenhum verificado em player real. Quem resolve na
+   * prática é o fallback por texto abaixo, que sobrevive a renomeação de
+   * classe. Quando o dump de stall revelar o seletor certo, ele entra no topo.
+   */
+  const AD_SKIP_SELECTORS = [
+    '[data-a-target*="skip-ad" i]',
+    '[data-test-selector*="skip-ad" i]',
+    'button[aria-label*="pular an" i]',
+    'button[aria-label*="skip ad" i]',
+  ];
+
+  /**
+   * Estreito de propósito: exige verbo de skip E palavra de anúncio. O padrão
+   * do core (/pular|skip/) casaria "Pular abertura" e "Skip Intro", que aqui
+   * são tratados fora do bloco de anúncio, no onTick — clicar neles durante o
+   * anúncio adiantaria parte do episódio.
+   */
+  const AD_SKIP_TEXT_RE =
+    /\b(?:pular|ignorar|dispensar|saltar|omitir|skip)\b[\s:]*(?:o|a|os|as|este|esta|the|this|el|la)?\s*\b(?:an[\u00fau]ncios?|publicidade|propaganda|comerciais|comercial|ads?|advert(?:isement)?s?)\b/i;
+
+
   // ───────────────────────────────────────────────────────────────────────────
   // Detecção do bloco de anúncio
   // ───────────────────────────────────────────────────────────────────────────
@@ -223,7 +254,8 @@
     videoSelectors: VIDEO_SELECTORS,
 
     /** Vazio: não existe botão de pular anúncio na Twitch. */
-    skipButtonSelectors: [],
+    skipButtonSelectors: AD_SKIP_SELECTORS,
+    skipTextRe: AD_SKIP_TEXT_RE,
 
     skipFallbackRoots: SKIP_FALLBACK_ROOTS,
     overlayHideSelectors: OVERLAY_HIDE_SELECTORS,
@@ -247,9 +279,9 @@
     configDefaults: { stallWarnMs: 240000 },
 
     supports: {
-      // SSAI em transmissão ao vivo: não existe botão de pular e não existe
-      // playhead pra frente. Ligar qualquer um dos dois só geraria loop inútil.
-      clickSkipButton: false,
+      // SSAI: o player reverte o seek dentro do bloco, então adiantar o
+      // playhead só geraria loop. Clicar, não: quando o site põe um botão
+      // de pular na tela, ele funciona igual ao de qualquer outro lugar.
       fastForwardUnskippable: false,
       // Nada disso existe na Twitch: não há abertura/recap, não há modal de
       // "ainda está assistindo?", não há capítulo patrocinado declarado pelo

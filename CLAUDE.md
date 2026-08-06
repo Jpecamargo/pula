@@ -76,11 +76,22 @@ comportamento específico do site (diálogos, capítulos, pular abertura).
 **YouTube é a exceção, não a regra**: lá o anúncio é um `<video>` **separado**,
 com duração própria e classe `.ad-showing` no player — por isso dá pra clicar em
 "Pular anúncio" e jogar o playhead pro fim. Nos outros streamings o anúncio é
-**SSAI**, costurado no mesmo stream do conteúdo: não existe elemento de anúncio,
-não existe botão de pular, e o player reverte `currentTime`. Lá os adapters
-declaram `supports.clickSkipButton: false` / `supports.fastForwardUnskippable:
-false` e o ganho real é mutar, esconder overlay e pular abertura/recap/próximo
-episódio. Não aceitar adapter que prometa skip onde não existe skip.
+**SSAI**, costurado no mesmo stream do conteúdo: não existe elemento de anúncio
+e o player reverte `currentTime`. Lá os adapters declaram
+`supports.fastForwardUnskippable: false` — adiantar o playhead é o que gera loop
+de clique contra o player — e o ganho real é mutar, esconder overlay e pular
+abertura/recap/próximo episódio.
+
+`clickSkipButton` fica **ligado** mesmo nos adapters SSAI. Não é promessa de que
+o botão existe: é que, quando o site põe um na tela (anúncio interativo,
+pré-roll de parceiro), clicar é exatamente o gesto que o usuário faria, e o
+custo quando não existe é uma query que não casa nada. O que não se aceita é
+adapter que finja que o seek funciona onde ele é revertido.
+
+Nos adapters SSAI o `skipTextRe` é **obrigatoriamente estreito**: exige verbo de
+skip *e* palavra de anúncio. O padrão do core (`/pular|skip/`) casaria "Pular
+abertura", que ali é tratado fora do bloco de anúncio, no `onTick` — clicar nele
+durante o anúncio adiantaria parte do episódio.
 
 **ISOLATED world**: o content script roda no world padrão do MV3, onde a API
 interna dos players (`#movie_player.mute()`, `.getPlayerState()`) **não** está

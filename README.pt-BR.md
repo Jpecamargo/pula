@@ -31,23 +31,28 @@ separado**, com duração própria e botão "Pular anúncio" de verdade, então 
 pular mesmo — clicar no botão, ou jogar o playhead pro fim.
 
 Em todo o resto o anúncio é **SSAI** (inserção no lado do servidor): vem costurado
-no mesmo stream do conteúdo. Não existe elemento de anúncio, não existe botão de
-pular, e o player reverte qualquer tentativa de avançar o intervalo. Fingir o
-contrário só geraria um loop de clique. O que funciona ali é mutar o bloco,
-esconder o overlay e o contador, e clicar em "Pular abertura" / "Pular
-recapitulação" / "Próximo episódio" quando o próprio episódio oferece.
+no mesmo stream do conteúdo. Não existe elemento de anúncio, e o player reverte
+qualquer tentativa de avançar o intervalo — insistir nisso só geraria loop de
+clique. O que funciona ali é mutar o bloco, esconder o overlay e o contador, e
+clicar em "Pular abertura" / "Pular recapitulação" / "Próximo episódio" quando o
+próprio episódio oferece.
 
-| Serviço | Como o anúncio é servido | Pula o anúncio em si | Muta + esconde overlay | Pula abertura / recap / próximo episódio |
+O botão de pular anúncio o Pula também clica, quando aparece: a maior parte do
+inventário desses serviços não tem botão nenhum, mas alguns formatos têm, e aí
+clicar é o mesmo gesto que você faria com o mouse. Quando não tem, a busca
+simplesmente não acha nada e o bloco segue mutado.
+
+| Serviço | Como o anúncio é servido | Clica no botão de pular | Muta + esconde overlay | Pula abertura / recap / próximo episódio |
 |---|---|---|---|---|
 | YouTube | vídeo de anúncio separado | sim — clica em "Pular anúncio" e adianta o não-pulável | sim | n/a |
-| Netflix | SSAI | não | sim | sim |
-| Prime Video | SSAI | não | sim | sim |
-| Disney+ | SSAI | não | sim | sim |
-| Max | SSAI | não | sim | sim |
-| Twitch | SSAI | não | sim | n/a |
-| Globoplay | SSAI | não | sim | sim |
-| Crunchyroll | SSAI | não | sim | sim |
-| Paramount+ | SSAI | não | sim | sim |
+| Netflix | SSAI | quando o site oferece | sim | sim |
+| Prime Video | SSAI | quando o site oferece | sim | sim |
+| Disney+ | SSAI | quando o site oferece | sim | sim |
+| Max | SSAI | quando o site oferece | sim | sim |
+| Twitch | SSAI | quando o site oferece | sim | n/a |
+| Globoplay | SSAI | quando o site oferece | sim | sim |
+| Crunchyroll | SSAI | quando o site oferece | sim | sim |
+| Paramount+ | SSAI | quando o site oferece | sim | sim |
 
 Além disso, no YouTube especificamente:
 

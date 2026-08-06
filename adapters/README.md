@@ -70,7 +70,12 @@ Quase todo o resto usa **SSAI** — o anúncio vem costurado no mesmo stream do
 conteúdo. Não existe elemento de anúncio, não existe botão de pular, e `currentTime`
 é revertido pelo player se você tentar avançar. Nesses casos:
 
-- `supports.clickSkipButton: false`, `supports.fastForwardUnskippable: false`
+- `supports.fastForwardUnskippable: false` — adiantar o playhead vira loop contra
+  o player. Já `clickSkipButton` fica **ligado**: quando o site põe um botão de
+  pular na tela, ele funciona, e quando não põe a query só não casa nada
+- o `skipTextRe` do adapter tem que exigir verbo de skip **e** palavra de anúncio.
+  O padrão do core casaria "Pular abertura", que é tratado no `onTick`, fora do
+  bloco — clicar nele durante o anúncio adiantaria parte do episódio
 - o que **funciona** é mutar durante o bloco, esconder o overlay/contador e clicar
   em "Pular abertura" / "Pular recapitulação" / "Próximo episódio"
 - `isAdShowing` costuma se apoiar no marcador de anúncio da UI (contador, badge,

@@ -33,23 +33,28 @@ YouTube is the exception among streaming sites: there, an ad is a **separate
 genuinely be skipped — click the button, or push the playhead to the end.
 
 Everywhere else the ads are **SSAI** (server-side ad insertion): the ad is
-stitched into the same stream as the show. There is no ad element, no skip
-button, and the player rejects any attempt to seek past the break. Pretending
-otherwise would just spin in a click loop. What actually works there is muting
-the break, hiding the ad overlay and countdown, and clicking "Skip intro" /
-"Skip recap" / "Next episode" when the episode itself offers them.
+stitched into the same stream as the show. There is no ad element, and the player
+rejects any attempt to seek past the break — insisting on that would just spin in
+a click loop. What actually works there is muting the break, hiding the ad
+overlay and countdown, and clicking "Skip intro" / "Skip recap" / "Next episode"
+when the episode itself offers them.
 
-| Service | How ads are served | Skips the ad itself | Mutes ad + hides overlay | Skips intro / recap / next episode |
+Pula clicks a skip-ad button too, whenever one shows up: most of the inventory on
+these services has no such button, but some ad formats do, and clicking it is the
+same gesture you would make with the mouse. When there is no button, the lookup
+simply finds nothing and the break stays muted.
+
+| Service | How ads are served | Clicks a skip button | Mutes ad + hides overlay | Skips intro / recap / next episode |
 |---|---|---|---|---|
 | YouTube | separate ad video | yes — clicks "Skip ad", fast-forwards unskippable ads | yes | n/a |
-| Netflix | SSAI | no | yes | yes |
-| Prime Video | SSAI | no | yes | yes |
-| Disney+ | SSAI | no | yes | yes |
-| Max | SSAI | no | yes | yes |
-| Twitch | SSAI | no | yes | n/a |
-| Globoplay | SSAI | no | yes | yes |
-| Crunchyroll | SSAI | no | yes | yes |
-| Paramount+ | SSAI | no | yes | yes |
+| Netflix | SSAI | when the site shows one | yes | yes |
+| Prime Video | SSAI | when the site shows one | yes | yes |
+| Disney+ | SSAI | when the site shows one | yes | yes |
+| Max | SSAI | when the site shows one | yes | yes |
+| Twitch | SSAI | when the site shows one | yes | n/a |
+| Globoplay | SSAI | when the site shows one | yes | yes |
+| Crunchyroll | SSAI | when the site shows one | yes | yes |
+| Paramount+ | SSAI | when the site shows one | yes | yes |
 
 On top of that, on YouTube specifically:
 
