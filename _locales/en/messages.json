@@ -1,0 +1,47 @@
+{
+  "extName": {
+    "message": "Pula — Automatic Ad Skipper",
+    "description": "Extension name. \"Pula\" is a proper noun, do not translate it."
+  },
+  "extDescription": {
+    "message": "Skips ads by DOM manipulation on YouTube, Netflix, Prime Video and more. No network blocking, no external requests."
+  },
+
+  "statAds": { "message": "ads" },
+  "statTime": { "message": "saved" },
+  "statSponsors": { "message": "sponsors" },
+
+  "sectionSites": { "message": "Streaming services" },
+  "sectionBehaviors": { "message": "Behaviors" },
+
+  "footerNote": { "message": "applies instantly, no reload" },
+  "reset": { "message": "Reset" },
+
+  "siteYoutube": { "message": "YouTube" },
+  "siteNetflix": { "message": "Netflix" },
+  "sitePrimevideo": { "message": "Prime Video" },
+  "siteDisneyplus": { "message": "Disney+" },
+  "siteMax": { "message": "Max" },
+  "siteTwitch": { "message": "Twitch" },
+  "siteGloboplay": { "message": "Globoplay" },
+  "siteCrunchyroll": { "message": "Crunchyroll" },
+  "siteParamountplus": { "message": "Paramount+" },
+
+  "optClickSkip": { "message": "Click \"Skip ad\"" },
+  "optClickSkipHint": { "message": "The main path." },
+  "optFastForward": { "message": "Fast-forward unskippable ads" },
+  "optFastForwardHint": { "message": "Jumps the playhead to the end. Only where the ad is a separate video." },
+  "optMute": { "message": "Mute during ads" },
+  "optRestoreAudio": { "message": "Restore audio afterwards" },
+  "optRestoreAudioHint": { "message": "Only if we were the ones who muted." },
+  "optHideOverlays": { "message": "Hide overlays on the player" },
+  "optHideFeed": { "message": "Hide ads outside the player" },
+  "optSkipIntros": { "message": "Skip intro and recap" },
+  "optSkipIntrosHint": { "message": "Also \"next episode\"." },
+  "optContinueWatching": { "message": "Confirm \"continue watching\"" },
+  "optAdblockDialog": { "message": "Dismiss anti-adblock modal" },
+  "optSponsorChapters": { "message": "Skip sponsor chapters" },
+  "optSponsorChaptersHint": { "message": "Uses the video's own chapters." },
+  "optStats": { "message": "Collect statistics" },
+  "optDebug": { "message": "[Pula] logs in the console" }
+}

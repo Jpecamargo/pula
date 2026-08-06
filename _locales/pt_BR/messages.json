@@ -1,0 +1,47 @@
+{
+  "extName": {
+    "message": "Pula — Pula anúncios automaticamente",
+    "description": "Nome da extensão. \"Pula\" é nome próprio, não traduzir."
+  },
+  "extDescription": {
+    "message": "Pula anúncios por manipulação de DOM no YouTube, Netflix, Prime Video e mais. Sem bloqueio de rede, sem requisições externas."
+  },
+
+  "statAds": { "message": "anúncios" },
+  "statTime": { "message": "economizados" },
+  "statSponsors": { "message": "patrocínios" },
+
+  "sectionSites": { "message": "Streamings" },
+  "sectionBehaviors": { "message": "Comportamentos" },
+
+  "footerNote": { "message": "vale na hora, sem F5" },
+  "reset": { "message": "Zerar" },
+
+  "siteYoutube": { "message": "YouTube" },
+  "siteNetflix": { "message": "Netflix" },
+  "sitePrimevideo": { "message": "Prime Video" },
+  "siteDisneyplus": { "message": "Disney+" },
+  "siteMax": { "message": "Max" },
+  "siteTwitch": { "message": "Twitch" },
+  "siteGloboplay": { "message": "Globoplay" },
+  "siteCrunchyroll": { "message": "Crunchyroll" },
+  "siteParamountplus": { "message": "Paramount+" },
+
+  "optClickSkip": { "message": "Clicar em \"Pular anúncio\"" },
+  "optClickSkipHint": { "message": "O caminho principal." },
+  "optFastForward": { "message": "Adiantar anúncio não-pulável" },
+  "optFastForwardHint": { "message": "Joga o playhead pro fim. Só onde o anúncio é vídeo separado." },
+  "optMute": { "message": "Mutar durante o anúncio" },
+  "optRestoreAudio": { "message": "Restaurar o áudio depois" },
+  "optRestoreAudioHint": { "message": "Só se o mute tiver sido nosso." },
+  "optHideOverlays": { "message": "Esconder overlays no player" },
+  "optHideFeed": { "message": "Esconder anúncios fora do player" },
+  "optSkipIntros": { "message": "Pular abertura e recapitulação" },
+  "optSkipIntrosHint": { "message": "Também \"próximo episódio\"." },
+  "optContinueWatching": { "message": "Confirmar \"continuar assistindo\"" },
+  "optAdblockDialog": { "message": "Fechar modal anti-adblock" },
+  "optSponsorChapters": { "message": "Pular capítulos de patrocínio" },
+  "optSponsorChaptersHint": { "message": "Usa os capítulos do próprio vídeo." },
+  "optStats": { "message": "Contar estatísticas" },
+  "optDebug": { "message": "Logs [Pula] no console" }
+}

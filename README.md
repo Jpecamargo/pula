@@ -1,99 +1,157 @@
 <img src="icons/icon128.png" alt="Pula" width="128" height="128">
 
-# Pula
+# Pula — Skip YouTube Ads and Streaming Intros with a DOM-Only Chrome Extension
 
-Extensão de uso pessoal que pula anúncios do YouTube por manipulação de DOM.
-Sem build step, sem dependências, sem rede.
+A Manifest V3 (MV3) Chrome extension that skips YouTube ads by clicking the same
+buttons you would click yourself, and mutes, hides and skips through ad breaks,
+intros and recaps on Netflix, Prime Video, Disney+, Max, Twitch, Globoplay,
+Crunchyroll and Paramount+.
 
-## O que ela faz
+No network blocking. No request filtering. No external servers. Nothing to sign
+up for.
 
-- Clica em **"Pular anúncio"** assim que o botão aparece — com fallback por
-  texto, que sobrevive ao YouTube renomear a classe
-- **Adianta** anúncio não-pulável (playhead pro fim; acelerar é o plano B)
-- **Muta** durante o anúncio e devolve o áudio depois — a menos que você tenha
-  mexido no volume no meio, aí o controle é seu
-- **Esconde** overlays no player e anúncios de feed, home, sidebar e masthead
-- Confirma sozinho o **"Vídeo pausado. Continuar assistindo?"**
-- Fecha o **modal anti-adblock** se ele aparecer por falso positivo
-- Pula **capítulos de patrocínio** usando os capítulos do próprio vídeo — sem
-  servidor, sem terceiros
-- Avisa no console quando os **seletores quebram**, com os candidatos que achou
-- **Popup** com um toggle por comportamento e contador de tempo economizado
+[Leia em português (pt-BR)](README.pt-BR.md)
 
-Nada de `webRequest`, `declarativeNetRequest` ou bloqueio de host: a página
-carrega o anúncio normalmente, então o detector anti-adblock não tem sinal pra
-disparar. `storage` é a única permissão, e existe só por causa do popup.
+## Why I built this
 
-## Estrutura
+I play with a video or a music mix running on a second screen. That worked fine
+until an ad rolled: I had to put the controller down, reach for the mouse, drag
+the pointer over to the other monitor, hunt for "Skip ad", click it, and go back
+to the game — which by then had usually gone badly for me. Pausing the game to
+skip an ad twenty times an evening is a stupid way to spend an evening.
+
+So I wrote something that clicks the button for me. That is the whole idea, and
+it is why the extension works the way it does: it does not fight YouTube's ad
+system, it just does the mouse work I was doing by hand. If a human could do it
+with a mouse in the page, Pula does it. If a human could not, Pula does not
+pretend otherwise.
+
+## What it does, per service
+
+YouTube is the exception among streaming sites: there, an ad is a **separate
+`<video>` element** with its own duration and a real "Skip ad" button, so it can
+genuinely be skipped — click the button, or push the playhead to the end.
+
+Everywhere else the ads are **SSAI** (server-side ad insertion): the ad is
+stitched into the same stream as the show. There is no ad element, no skip
+button, and the player rejects any attempt to seek past the break. Pretending
+otherwise would just spin in a click loop. What actually works there is muting
+the break, hiding the ad overlay and countdown, and clicking "Skip intro" /
+"Skip recap" / "Next episode" when the episode itself offers them.
+
+| Service | How ads are served | Skips the ad itself | Mutes ad + hides overlay | Skips intro / recap / next episode |
+|---|---|---|---|---|
+| YouTube | separate ad video | yes — clicks "Skip ad", fast-forwards unskippable ads | yes | n/a |
+| Netflix | SSAI | no | yes | yes |
+| Prime Video | SSAI | no | yes | yes |
+| Disney+ | SSAI | no | yes | yes |
+| Max | SSAI | no | yes | yes |
+| Twitch | SSAI | no | yes | n/a |
+| Globoplay | SSAI | no | yes | yes |
+| Crunchyroll | SSAI | no | yes | yes |
+| Paramount+ | SSAI | no | yes | yes |
+
+On top of that, on YouTube specifically:
+
+- Hides ad overlays on the player and ads in the feed, home, sidebar and masthead
+- Auto-confirms the "Video paused. Continue watching?" dialog
+- Dismisses the anti-adblock modal if it shows up as a false positive
+- Skips **sponsor chapters** using the video's own chapter list — no server, no
+  third-party API, no account. It is SponsorBlock-shaped, without the network
+  call
+- Warns in the console when the selectors break, with the button candidates it
+  found, so you know exactly what to fix
+
+The popup gives you a toggle **per streaming service** and a toggle **per
+behavior**, plus a counter for ads skipped, time saved and sponsor segments
+skipped. Toggles apply immediately, with no page reload.
+
+## Why no network blocking matters
+
+Pula never touches `webRequest`, `declarativeNetRequest` or host permissions. The
+page loads the ad exactly as it normally would, and the extension only interacts
+with the resulting DOM.
+
+That is deliberate. Ad-block detection works by noticing that a request failed or
+that an expected element never appeared. If nothing is blocked, there is no
+signal to detect, so the anti-adblock enforcement has nothing to trigger on. It
+also means the extension cannot break playback by starving the player of a
+resource it needed.
+
+`storage` is the only permission in the manifest, and it exists purely so the
+popup can remember your toggles and the counter.
+
+## Install (load unpacked)
+
+There is no build step and no dependencies. The repository is the extension.
+
+1. Open `chrome://extensions`
+2. Turn on **Developer mode** (top right)
+3. **Load unpacked** and select the `pula/` folder (the folder, not
+   `manifest.json`)
+4. Open a video. If the tab was already open, reload it — content scripts are
+   only injected into navigations that happen after the install
+
+To confirm it is running, set `debug: true` in `CONFIG` (top of `core.js`, or via
+the popup's debug toggle) and filter the DevTools console for `[Pula]`.
+
+## Reloading after you edit
+
+The reload button alone is not enough: it reloads the extension package, but the
+open tab still holds the previously injected copy of the content script.
+
+| Edited | What to do |
+|---|---|
+| `core.js` or `adapters/*.js` | Reload button on the extension card in `chrome://extensions` **and** F5 on the streaming tab |
+| `popup.html` / `popup.js` | Close and reopen the popup (reload button only if that does not take) |
+| `_locales/*/messages.json` | Reload button, then reopen the popup |
+| `manifest.json` | Reload button, then F5. If Chrome complains, remove the extension and load it again |
+| `icons/` | Reload button (may need a hard reload of the `chrome://extensions` page) |
+
+Handy setup: keep `chrome://extensions` pinned in its own tab and edit the folder
+directly. There is no watcher, but reload plus F5 takes two seconds.
+
+## Layout
 
 ```
 pula/
-├── manifest.json      # MV3, content script em document_start, permissão storage
-├── content.js         # toda a lógica (CONFIG + seletores no topo)
-├── popup.html         # UI de toggles e contador
-├── popup.js           # lê/grava chrome.storage.local
-├── README.md
-└── icons/
-    ├── icon16.png
-    ├── icon48.png
-    └── icon128.png
+├── manifest.json      # MV3, content scripts at document_start, storage permission
+├── core.js            # the generic engine: tick loop, mute, stats, CSS, config
+├── adapters/          # one file per streaming service (see adapters/README.md)
+├── popup.html         # toggles and counter UI
+├── popup.js           # reads/writes chrome.storage.local
+├── _locales/          # en and pt_BR UI strings
+└── icons/             # icon16.png, icon48.png, icon128.png
 ```
 
-Os três PNGs são obrigatórios se o `manifest.json` declara o bloco `icons` —
-Chrome recusa carregar a extensão com referência a arquivo inexistente.
+The three PNGs are mandatory while `manifest.json` declares the `icons` block —
+Chrome refuses to load an extension that references a missing file.
 
-## Carregar sem compactação
+## When it breaks
 
-1. `chrome://extensions`
-2. Ligue **Modo do desenvolvedor** (canto superior direito)
-3. **Carregar sem compactação** → selecione a pasta `pula/` (a pasta, não o
-   `manifest.json`)
-4. Abra um vídeo do YouTube. Se já havia uma aba aberta, recarregue-a: content
-   scripts só são injetados em navegações posteriores à instalação.
+Streaming sites rename their CSS classes, and that is the usual way a DOM-based
+ad skipper stops working. When it happens you get a console warning like
+`[Pula:netflix] ad active for more than ...` listing every button that exists
+inside the ad container at that moment. The prefix tells you which adapter is
+talking, and the correct selector is almost always in that list — put it at the
+top of that adapter's `skipButtonSelectors`.
 
-Para conferir que está rodando: DevTools → Console → filtre por `[Pula]` depois
-de setar `debug: true` no CONFIG.
+If no warning shows up but the ad disappears anyway, the text-based fallback is
+carrying it: Pula also scans buttons inside the ad containers and picks by their
+label (Portuguese, English and Spanish), which survives most class renames. It is
+still worth updating the selector.
 
-## Recarregar depois de editar
+Behavior toggles live in the popup, not in the source. Note that the popup writes
+over `CONFIG`: if you edit a boolean in the file and nothing changes, that key is
+already stored in `chrome.storage` — change it from the popup instead.
 
-Content script (`content.js`) e `manifest.json` seguem caminhos diferentes:
+Adding support for another service means adding one adapter file and one entry in
+the manifest. The contract is documented in [`adapters/README.md`](adapters/README.md).
 
-| Editou | O que fazer |
-|---|---|
-| `content.js` | Botão ⟳ no card da extensão em `chrome://extensions` **e** F5 na aba do YouTube |
-| `popup.html` / `popup.js` | Feche e reabra o popup (⟳ só se não pegar) |
-| `manifest.json` | Botão ⟳ e depois F5. Se o Chrome reclamar, remova e carregue de novo |
-| `icons/` | Botão ⟳ (pode precisar de hard-reload da página `chrome://extensions`) |
+## Scope and disclaimer
 
-O ⟳ sozinho não basta: ele recarrega o pacote da extensão, mas a aba do YouTube
-continua com a cópia antiga do content script já injetada. Sempre ⟳ + F5.
-
-Atalho: deixe `chrome://extensions` aberta numa aba fixada e edite direto na
-pasta — não existe watcher, mas ⟳ + F5 leva dois segundos.
-
-## Ajustes
-
-Ligar e desligar comportamento: clique no ícone da extensão. O toggle vale na
-hora, sem F5.
-
-O resto está no topo do `content.js`:
-
-- `CONFIG` — padrões de cada comportamento, mais os números (`stallWarnMs`,
-  `fastForwardFallbackRate`, `safetyNetIntervalMs`)
-- `SKIP_BUTTON_SELECTORS` — quando o YouTube renomear a classe do botão, é aqui
-- `OVERLAY_HIDE_SELECTORS` / `FEED_HIDE_SELECTORS` — o que some via CSS
-- `SPONSOR_CHAPTER_RE` — que título de capítulo conta como patrocínio
-
-Atenção: o popup grava por cima do `CONFIG`. Se você editar um valor booleano no
-arquivo e nada mudar, é porque aquela chave já está em `chrome.storage` — mexa
-pelo popup.
-
-## Quando quebrar
-
-O YouTube renomeia classe de vez em quando. Quando isso acontecer, o console vai
-ter um aviso `[Pula] anúncio ativo há mais de 10000ms...` com a lista de botões
-que existem dentro do container de anúncio. Pegue o seletor certo dessa lista e
-ponha no topo de `SKIP_BUTTON_SELECTORS`.
-
-Se o aviso não aparecer mas o anúncio também não sumir, o fallback por texto
-provavelmente está segurando as pontas — vale atualizar o seletor mesmo assim.
+This is a personal-use project, written for my own setup and shared as-is. It is
+not on the Chrome Web Store, it is not audited, and it will break whenever a
+streaming site reshuffles its DOM. Consider supporting the creators you watch —
+the point of this thing was never to avoid paying for content, it was to stop
+pausing my game.

@@ -71,6 +71,16 @@
       font-size: 11px;
       color: var(--muted);
     }
+    h2 {
+      margin: 14px 0 2px;
+      font-size: 10px;
+      font-weight: 600;
+      text-transform: uppercase;
+      letter-spacing: 0.06em;
+      color: var(--muted);
+    }
+    h2:first-of-type { margin-top: 0; }
+    #sites { display: grid; grid-template-columns: 1fr 1fr; gap: 0 8px; }
     footer {
       display: flex;
       align-items: center;
@@ -97,16 +107,20 @@
   <h1>Pula<span>.</span></h1>
 
   <div class="stats">
-    <div class="stat"><b id="stat-ads">0</b><small>anúncios</small></div>
-    <div class="stat"><b id="stat-time">0s</b><small>economizados</small></div>
-    <div class="stat"><b id="stat-chapters">0</b><small>patrocínios</small></div>
+    <div class="stat"><b id="stat-ads">0</b><small data-i18n="statAds">anúncios</small></div>
+    <div class="stat"><b id="stat-time">0s</b><small data-i18n="statTime">economizados</small></div>
+    <div class="stat"><b id="stat-chapters">0</b><small data-i18n="statSponsors">patrocínios</small></div>
   </div>
 
+  <h2 data-i18n="sectionSites">Streamings</h2>
+  <div id="sites"></div>
+
+  <h2 data-i18n="sectionBehaviors">Comportamentos</h2>
   <div id="options"></div>
 
   <footer>
-    <span>vale na hora, sem F5</span>
-    <button id="reset">Zerar</button>
+    <span data-i18n="footerNote">vale na hora, sem F5</span>
+    <button id="reset" data-i18n="reset">Zerar</button>
   </footer>
 
   <script src="popup.js"></script>
