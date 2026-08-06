@@ -535,8 +535,17 @@
     return Math.max(0, video.duration - video.currentTime);
   }
 
-  /** @returns true se conseguiu de fato adiantar o anúncio. */
-  function fastForwardAd(video) {
+  /**
+   * Adianta o anúncio e contabiliza o que isso economizou. Quem conta é aqui, e
+   * não o `tick()`, porque quanto se economiza depende de qual dos dois
+   * caminhos pegou — e só esta função sabe disso.
+   *
+   * `remaining` vem medido de fora de propósito: depois do seek o `currentTime`
+   * já é o do fim do anúncio, e a conta sairia zerada.
+   *
+   * @returns true se conseguiu de fato adiantar o anúncio.
+   */
+  function fastForwardAd(video, remaining) {
     if (!CONFIG.fastForwardUnskippable || !video) return false;
 
     const duration = video.duration;
@@ -561,7 +570,12 @@
         video.playbackRate = CONFIG.fastForwardFallbackRate;
         log('seek ignorado — acelerando para', CONFIG.fastForwardFallbackRate + 'x');
       }
+      // O anúncio acelerado ainda toca até o fim: economizamos só a fração que
+      // a aceleração corta, não o restante inteiro.
+      countAd(remaining * (1 - 1 / CONFIG.fastForwardFallbackRate));
     }
+
+    if (seeked) countAd(remaining);
 
     // Anúncio pausado nunca termina sozinho.
     if (video.paused) video.play().catch(() => {});
@@ -798,12 +812,15 @@
       // Medido antes de agir: depois do skip a duração já é a do vídeo real.
       const remaining = remainingSeconds(video);
       // Tenta o skip primeiro: é instantâneo e o mais limpo dos dois caminhos.
-      const skipped = CONFIG.clickSkipButton && clickSkipButton();
-      // Só adianta o playhead se não deu pra pular (não-pulável ou ainda em
-      // contagem regressiva). Barato o suficiente pra rodar todo tick.
-      const advanced = skipped ? false : fastForwardAd(video);
+      // Cada caminho contabiliza o que economizou — `countAd` ignora o segundo.
+      if (CONFIG.clickSkipButton && clickSkipButton()) {
+        countAd(remaining);
+      } else {
+        // Só adianta o playhead se não deu pra pular (não-pulável ou ainda em
+        // contagem regressiva). Barato o suficiente pra rodar todo tick.
+        fastForwardAd(video, remaining);
+      }
 
-      if (skipped || advanced) countAd(remaining);
       if (
         CONFIG.stallWarnMs > 0 &&
         !state.stallWarned &&

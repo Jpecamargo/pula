@@ -44,6 +44,8 @@ Três fontes disparam `scheduleTick()`:
 
 **Ordem no tick durante anúncio**: tenta o skip primeiro (instantâneo e mais limpo); só se falhar é que `fastForwardAd()` joga o playhead para o fim, com aceleração de playback como plano B se o seek for rejeitado. O ramo de anúncio faz `return` — "continuar assistindo" e capítulos patrocinados só rodam fora de anúncio.
 
+**Quem chama `countAd()`**: cada caminho de skip contabiliza o que ele mesmo economizou, porque o valor depende do caminho — no clique e no seek o anúncio inteiro é cortado, na aceleração ele ainda toca (economia é `remaining * (1 - 1/fastForwardFallbackRate)`). O pré-roll do YouTube costuma **rejeitar o seek**, então esquecer de contar o ramo da aceleração deixa o contador zerado mesmo com o anúncio sumindo da tela. `remaining` é medido no `tick()` antes de qualquer ação e passado adiante: depois do seek/clique o `currentTime` já é o do vídeo real. `state.adCounted` garante uma contagem por anúncio, então chamadas repetidas a cada tick são inofensivas.
+
 **Resiliência a renomeação de classe** (o modo mais comum da extensão quebrar):
 - `clickSkipByText()` é o último item do pipeline de skip — varre `button`/`[role=button]` **dentro** dos containers de anúncio (`SKIP_FALLBACK_ROOTS`) e escolhe por texto. Os roots são só containers de anúncio de propósito: varrer `#movie_player` inteiro pegaria botões da barra de controle.
 - `warnStalledAd()` dispara `console.warn` (não gated por `debug`) quando o anúncio passa de `CONFIG.stallWarnMs` sem que nada resolva, com dump dos candidatos a botão. É o alarme de manutenção — uma vez por anúncio.
