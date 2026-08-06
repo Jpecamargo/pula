@@ -325,6 +325,19 @@
     return false;
   }
 
+  /** Varre botões dentro de `root` e clica no primeiro cujo texto casar. */
+  function clickByTextIn(root, textRe, silent) {
+    for (const el of queryAll(['button', '[role="button"]', 'a'], root)) {
+      const label = `${el.textContent || ''} ${el.getAttribute('aria-label') || ''}`;
+      if (!textRe.test(label)) continue;
+      if (!isClickable(el)) continue;
+      el.click();
+      if (!silent) log('clique pelo fallback de texto:', describe(el));
+      return true;
+    }
+    return false;
+  }
+
   /** Varre botões dentro de `roots` e clica no primeiro cujo texto casar. */
   function clickByText(roots, textRe, { silent = false } = {}) {
     for (const rootSel of roots || []) {
@@ -335,17 +348,29 @@
         continue;
       }
       if (!root) continue;
-
-      for (const el of queryAll(['button', '[role="button"]', 'a'], root)) {
-        const label = `${el.textContent || ''} ${el.getAttribute('aria-label') || ''}`;
-        if (!textRe.test(label)) continue;
-        if (!isClickable(el)) continue;
-        el.click();
-        if (!silent) log('clique pelo fallback de texto:', describe(el));
-        return true;
-      }
+      if (clickByTextIn(root, textRe, silent)) return true;
     }
     return false;
+  }
+
+  /**
+   * Mesma varredura, no documento inteiro — sem root nenhum.
+   *
+   * Existe porque root é justamente o que apodrece: `clickByText` só enxerga o
+   * PRIMEIRO nó que casar cada seletor de root, então basta o wrapper do player
+   * mudar de nome (ou o botão ser renderizado fora dele) pra o fallback não
+   * alcançar um botão que está na tela. E o botão de "pular abertura" de vários
+   * players hoje não tem classe nem `data-testid` pra ancorar — o texto é a
+   * única marca estável que sobrou.
+   *
+   * Só chamar com regex que exija verbo E alvo ("pular abertura", "skip
+   * intro"). Um `/pular|skip/` solto aqui clicaria em "avançar 10 segundos" da
+   * barra de controle ou num card qualquer do catálogo. Pelo mesmo motivo isto
+   * NÃO serve pra "próximo episódio": esse texto aparece em lista de episódios e
+   * carrossel fora do player.
+   */
+  function clickByTextAnywhere(textRe, { silent = false } = {}) {
+    return clickByTextIn(document, textRe, silent);
   }
 
   // ───────────────────────────────────────────────────────────────────────────
@@ -656,6 +681,7 @@
     queryAll,
     clickFirst,
     clickByText,
+    clickByTextAnywhere,
     isClickable,
     clickTargetFor,
     describe,

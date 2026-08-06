@@ -440,7 +440,11 @@
       ctx.clickFirst(INTRO_SKIP_SELECTORS) ||
       // Aqui o texto não é último recurso, é o caminho de maior confiança: os
       // rótulos são conhecidos, os seletores acima não (ver cabeçalho).
-      ctx.clickByText(SKIP_FALLBACK_ROOTS, SKIP_INTRO_TEXT_RE);
+      ctx.clickByText(SKIP_FALLBACK_ROOTS, SKIP_INTRO_TEXT_RE) ||
+      // E sem root nenhum: o botão pode nascer fora do wrapper conhecido, ou o
+      // wrapper mudar de nome. Ver o comentário de clickByTextAnywhere no core.
+      // Só a abertura vai por aqui — "próximo episódio" continua preso ao root.
+      ctx.clickByTextAnywhere(SKIP_INTRO_TEXT_RE);
 
     // Próximo episódio só perto do fim, seletor E texto: os dois caminhos
     // esbarram no botão homônimo da barra de controle, que no meio do episódio

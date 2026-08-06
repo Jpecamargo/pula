@@ -358,7 +358,10 @@
       // Último recurso: nenhum data-testid conhecido casou. É o que sobrevive a
       // renomeação e o que cobre as línguas em que o `aria-label` não tem
       // "skip" (pt, es, fr, it, de).
-      ctx.clickByText(SKIP_FALLBACK_ROOTS, SKIP_INTRO_TEXT_RE);
+      ctx.clickByText(SKIP_FALLBACK_ROOTS, SKIP_INTRO_TEXT_RE) ||
+      // E sem root nenhum: o botão pode nascer fora do wrapper conhecido, ou o
+      // wrapper mudar de nome. Ver o comentário de clickByTextAnywhere no core.
+      ctx.clickByTextAnywhere(SKIP_INTRO_TEXT_RE);
 
     if (clicked) st.lastSkipClick = now;
     return clicked;

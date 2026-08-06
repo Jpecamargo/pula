@@ -203,9 +203,20 @@
    * Estreito de propósito. Um `/pular|próximo/` genérico varrendo o player
    * pegaria "Avançar 10 segundos", "Próximo" e "Ao vivo" da barra de controle.
    * Exige o complemento ("pular ABERTURA", "próximo EPISÓDIO") sempre.
+   *
+   * São dois porque o alcance é diferente: a versão com "próximo episódio" só
+   * roda dentro dos roots do player — fora dele esse texto é a chamada dos
+   * carrosséis e da lista de episódios, e clicar ali trocaria o que está
+   * tocando. "Pular abertura" não aparece fora do player, então essa parte pode
+   * ir pro documento inteiro (ver clickByTextAnywhere no core).
    */
-  const SKIP_INTRO_TEXT_RE =
-    /pular\s+(a\s+)?(abertura|in[íi]cio|introdu[çc][ãa]o|intro|recapitula[çc][ãa]o|recap|resumo|cr[ée]ditos)|(assistir\s+)?(ao\s+)?pr[óo]ximo\s+epis[óo]dio/i;
+  const SKIP_INTRO_ONLY_TEXT_RE =
+    /pular\s+(a\s+)?(abertura|in[íi]cio|introdu[çc][ãa]o|intro|recapitula[çc][ãa]o|recap|resumo|cr[ée]ditos)/i;
+
+  const SKIP_INTRO_TEXT_RE = new RegExp(
+    `${SKIP_INTRO_ONLY_TEXT_RE.source}|(assistir\\s+)?(ao\\s+)?pr[óo]ximo\\s+epis[óo]dio`,
+    'i',
+  );
 
   /**
    * Modal de inatividade ("Você ainda está aí?"), que pausa a reprodução até
@@ -375,7 +386,10 @@
       (!live && ctx.clickFirst(NEXT_EPISODE_SELECTORS)) ||
       // Último recurso: nenhum seletor conhecido casou. Sobrevive a renomeação,
       // que é o modo mais comum de tudo isso quebrar.
-      ctx.clickByText(SKIP_FALLBACK_ROOTS, SKIP_INTRO_TEXT_RE);
+      ctx.clickByText(SKIP_FALLBACK_ROOTS, SKIP_INTRO_TEXT_RE) ||
+      // E sem root nenhum, só pra abertura: o botão pode nascer fora do wrapper
+      // conhecido, ou o wrapper mudar de nome.
+      ctx.clickByTextAnywhere(SKIP_INTRO_ONLY_TEXT_RE);
 
     if (clicked) st.lastSkipClick = now;
     return clicked;

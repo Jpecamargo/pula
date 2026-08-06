@@ -330,7 +330,10 @@
       ctx.clickFirst(NEXT_EPISODE_SELECTORS) ||
       // Último recurso: nenhuma classe conhecida casou. Sobrevive a renomeação,
       // que é o modo mais comum de tudo isso quebrar.
-      ctx.clickByText(SKIP_FALLBACK_ROOTS, SKIP_INTRO_TEXT_RE);
+      ctx.clickByText(SKIP_FALLBACK_ROOTS, SKIP_INTRO_TEXT_RE) ||
+      // E sem root nenhum: o botão pode nascer fora do wrapper conhecido, ou o
+      // wrapper mudar de nome. Ver o comentário de clickByTextAnywhere no core.
+      ctx.clickByTextAnywhere(SKIP_INTRO_TEXT_RE);
 
     if (clicked) st.lastSkipClick = now;
     return clicked;

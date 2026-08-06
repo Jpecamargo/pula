@@ -468,7 +468,11 @@
       ctx.clickFirst(INTRO_SKIP_SELECTORS) ||
       // Último recurso: nenhum seletor conhecido casou. Sobrevive a renomeação,
       // que é o modo mais comum de tudo isso quebrar.
-      ctx.clickByText(SKIP_FALLBACK_ROOTS, SKIP_INTRO_TEXT_RE);
+      ctx.clickByText(SKIP_FALLBACK_ROOTS, SKIP_INTRO_TEXT_RE) ||
+      // E sem root nenhum: o botão pode nascer fora do wrapper conhecido, ou o
+      // wrapper mudar de nome. Ver o comentário de clickByTextAnywhere no core.
+      // Só a abertura vai por aqui — "próximo episódio" continua preso ao root.
+      ctx.clickByTextAnywhere(SKIP_INTRO_TEXT_RE);
 
     // Próximo episódio só perto do fim e fora de live, seletor E texto: os dois
     // caminhos esbarram no botão homônimo da barra de controle, que no meio do

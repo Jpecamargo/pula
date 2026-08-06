@@ -145,6 +145,12 @@ anúncio, então chamadas repetidas a cada tick são inofensivas.
   varre `button`/`[role=button]` **dentro** dos `skipFallbackRoots` do adapter e
   escolhe por texto. Os roots são só containers de anúncio de propósito: varrer o
   player inteiro pegaria botões da barra de controle.
+- `clickByTextAnywhere(regex)` é o degrau seguinte, **sem root**, e existe porque
+  root é o que apodrece: o `clickByText` só olha o primeiro nó que casar cada
+  seletor, então wrapper renomeado (ou botão renderizado fora dele) deixa passar
+  um botão que está na tela. Os adapters usam isso pra "pular abertura", cujo
+  regex exige verbo E alvo. Não usar com texto de "próximo episódio" — fora do
+  player esse texto é lista de episódios e carrossel.
 - `warnStalledAd()` dispara `console.warn` (não gated por `debug`) quando o
   anúncio passa de `CONFIG.stallWarnMs` sem que nada resolva, com dump dos
   candidatos a botão. É o alarme de manutenção — uma vez por anúncio. Nos

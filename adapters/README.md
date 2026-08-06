@@ -41,12 +41,17 @@ globalThis.__PULA_ADAPTER__ = {
 
 `CONFIG`, `can(key)`, `state`, `adapterState`, `handledDialogs`, `log`,
 `queryFirst(sels, root)`, `queryAll(sels, root)`, `clickFirst(sels, root)`,
-`clickByText(roots, regex)`, `isClickable(el)`, `clickTargetFor(el)`,
-`describe(el)`, `getPlayer()`, `getVideo()`, `remainingSeconds(video)`,
-`bumpStat(key, n)`, `countAd(remaining)`.
+`clickByText(roots, regex)`, `clickByTextAnywhere(regex)`, `isClickable(el)`,
+`clickTargetFor(el)`, `describe(el)`, `getPlayer()`, `getVideo()`,
+`remainingSeconds(video)`, `bumpStat(key, n)`, `countAd(remaining)`.
 
 - `can('x')` já combina o toggle do popup com o `supports` — use sempre ele, nunca
   `CONFIG.x` direto.
+- `clickByTextAnywhere(regex)` varre o documento inteiro, sem root — é o último
+  degrau do "pular abertura", pra quando o wrapper do player muda de nome ou o
+  botão não tem classe nenhuma. Só com regex que exija verbo E alvo ("pular
+  abertura"). Nunca com texto de "próximo episódio": fora do player esse texto é
+  a lista de episódios, e clicar ali troca o que está tocando.
 - `adapterState` é um objeto livre e exclusivo do adapter. Guarde cache aí; o core
   nunca lê de lá.
 - `handledDialogs` é um `WeakSet` compartilhado: marque um diálogo antes de clicar
