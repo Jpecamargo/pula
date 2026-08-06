@@ -23,6 +23,13 @@
  *   button.skip__button (às vezes com `.body-copy`) — pular abertura/recap/créditos
  *   [data-testid="up-next-play-button"]             — próximo episódio
  *
+ * VISTO NO DOM REAL (2026) — o botão de abertura perdeu a classe:
+ *   <div class="button-container"><button type="button">
+ *     <span class="label">PULAR ABERTURA</span></button></div>
+ * Nada de `skip__button`, nada de `data-testid`. É por isso que o caminho que
+ * funciona hoje é o scan por texto (`clickIntroByText`), e não a lista de
+ * seletores — que fica como atalho pras versões antigas.
+ *
  * DOCUMENTADO, não verificado — a marcação do container do player
  * (`.btm-media-client-element` no <video>, `.btm-media-overlays-container` nos
  * overlays) circula em relatos de inspeção do player, mas nenhuma fonte pública
@@ -127,6 +134,12 @@
   /**
    * "Pular abertura" / "Pular recapitulação" / "Pular créditos" — o Disney+ usa
    * o mesmo botão pros três, mudando só o rótulo.
+   *
+   * O player atual (renderizado por lit) não põe classe nenhuma no botão:
+   * `<div class="button-container"><button type="button"><span class="label">
+   * PULAR ABERTURA</span></button></div>`. Não dá pra ancorar em marcação, então
+   * quem resolve na prática é o scan por texto abaixo — a lista aqui é o caminho
+   * rápido pras versões que ainda trazem classe.
    */
   const INTRO_SKIP_SELECTORS = [
     'button.skip__button',
@@ -356,6 +369,32 @@
   // Abertura, recapitulação e próximo episódio
   // ───────────────────────────────────────────────────────────────────────────
 
+  /**
+   * Varredura por texto no documento inteiro, sem depender de root.
+   *
+   * O `clickByText` do core só enxerga o PRIMEIRO nó que casar cada root, e os
+   * roots daqui (`.btm-media-overlays-container`, `#hudson-wrapper`) são
+   * marcação antiga: se o wrapper mudou de nome, o botão fica fora do alcance
+   * mesmo estando na tela. Como o botão atual não tem classe nem `data-testid`,
+   * sobrou o texto — e sem root não tem o que quebrar no próximo deploy.
+   *
+   * Varrer o documento só é seguro porque SKIP_INTRO_TEXT_RE exige o par
+   * verbo+alvo ("pular abertura", "skip intro"): nenhum botão da barra de
+   * controle, do menu ou do catálogo tem esse texto. Um `/pular|skip/` solto
+   * aqui clicaria em "avançar 10 segundos".
+   */
+  function clickIntroByText(ctx) {
+    for (const el of ctx.queryAll(['button', '[role="button"]', 'a'])) {
+      const label = `${el.textContent || ''} ${el.getAttribute('aria-label') || ''}`;
+      if (!SKIP_INTRO_TEXT_RE.test(label)) continue;
+      if (!ctx.isClickable(el)) continue;
+      el.click();
+      ctx.log('abertura pulada pelo texto:', ctx.describe(el));
+      return true;
+    }
+    return false;
+  }
+
   function clickSkipButtons(ctx) {
     if (!ctx.can('skipIntros')) return false;
 
@@ -368,7 +407,8 @@
       ctx.clickFirst(NEXT_EPISODE_SELECTORS) ||
       // Último recurso: nenhuma marcação conhecida casou. Sobrevive a
       // renomeação, que é o modo mais comum de tudo isso quebrar.
-      ctx.clickByText(SKIP_FALLBACK_ROOTS, SKIP_INTRO_TEXT_RE);
+      ctx.clickByText(SKIP_FALLBACK_ROOTS, SKIP_INTRO_TEXT_RE) ||
+      clickIntroByText(ctx);
 
     if (clicked) st.lastSkipClick = now;
     return clicked;
