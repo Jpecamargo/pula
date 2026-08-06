@@ -1,3 +1,5 @@
+<img src="icons/icon128.png" alt="Pula" width="128" height="128">
+
 # Pula
 
 Extensão de uso pessoal que pula anúncios do YouTube por manipulação de DOM.
