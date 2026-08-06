@@ -72,6 +72,16 @@ Toda query de seletor passa por `try/catch` (`queryFirst`, `clickSkipButton`) po
 
 `isClickable()` existe porque o botão de skip está no DOM durante a contagem regressiva ("Pular em 5s") mas oculto — clicar nessa hora é no-op.
 
+## Versionamento e commits
+
+Toda mudança entregue termina em commit, sempre precedido de bump do campo `version` no `manifest.json` — é ele que o Chrome usa para saber que a extensão mudou, e sem bump fica impossível dizer qual build está carregada no navegador.
+
+- patch (`1.1.0` → `1.1.1`): correção de seletor, ajuste de comportamento existente, docs
+- minor (`1.1.0` → `1.2.0`): novo comportamento, nova flag no `CONFIG`/popup
+- major: mudança que quebra a config já gravada em `chrome.storage`
+
+Commit em português, no imperativo, seguindo o histórico (`Adiciona…`, `Corrige…`). Bump e mudança vão no mesmo commit.
+
 ## Convenções
 
 Código e comentários em português. Comentários explicam o *porquê* (por que microtask, por que `documentElement`, por que janela temporal), não o *o quê* — seguir esse padrão.
