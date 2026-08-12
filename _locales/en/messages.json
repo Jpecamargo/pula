@@ -31,6 +31,8 @@
   "optClickSkipHint": { "message": "The main path." },
   "optFastForward": { "message": "Fast-forward unskippable ads" },
   "optFastForwardHint": { "message": "Jumps the playhead to the end. Only where the ad is a separate video." },
+  "optRecoverStalled": { "message": "Unfreeze stalled player" },
+  "optRecoverStalledHint": { "message": "Reloads the page if it does not come back on its own." },
   "optMute": { "message": "Mute during ads" },
   "optRestoreAudio": { "message": "Restore audio afterwards" },
   "optRestoreAudioHint": { "message": "Only if we were the ones who muted." },

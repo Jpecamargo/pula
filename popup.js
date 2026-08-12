@@ -38,6 +38,7 @@ const SITES = [
 const OPTIONS = [
   { key: 'clickSkipButton', label: 'Clicar em "Pular anúncio"', msg: 'optClickSkip', hint: 'O caminho principal.', hintMsg: 'optClickSkipHint' },
   { key: 'fastForwardUnskippable', label: 'Adiantar anúncio não-pulável', msg: 'optFastForward', hint: 'Joga o playhead pro fim. Só onde o anúncio é vídeo separado.', hintMsg: 'optFastForwardHint' },
+  { key: 'recoverStalledPlayer', label: 'Destravar player congelado', msg: 'optRecoverStalled', hint: 'Se não voltar sozinho, recarrega a página.', hintMsg: 'optRecoverStalledHint' },
   { key: 'muteDuringAds', label: 'Mutar durante o anúncio', msg: 'optMute' },
   { key: 'restoreAudioAfterAd', label: 'Restaurar o áudio depois', msg: 'optRestoreAudio', hint: 'Só se o mute tiver sido nosso.', hintMsg: 'optRestoreAudioHint' },
   { key: 'hideAdOverlays', label: 'Esconder overlays no player', msg: 'optHideOverlays' },

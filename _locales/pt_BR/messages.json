@@ -31,6 +31,8 @@
   "optClickSkipHint": { "message": "O caminho principal." },
   "optFastForward": { "message": "Adiantar anúncio não-pulável" },
   "optFastForwardHint": { "message": "Joga o playhead pro fim. Só onde o anúncio é vídeo separado." },
+  "optRecoverStalled": { "message": "Destravar player congelado" },
+  "optRecoverStalledHint": { "message": "Se não voltar sozinho, recarrega a página." },
   "optMute": { "message": "Mutar durante o anúncio" },
   "optRestoreAudio": { "message": "Restaurar o áudio depois" },
   "optRestoreAudioHint": { "message": "Só se o mute tiver sido nosso." },

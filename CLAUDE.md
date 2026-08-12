@@ -151,6 +151,15 @@ anúncio, então chamadas repetidas a cada tick são inofensivas.
   um botão que está na tela. Os adapters usam isso pra "pular abertura", cujo
   regex exige verbo E alvo. Não usar com texto de "próximo episódio" — fora do
   player esse texto é lista de episódios e carrossel.
+- `watchStalledPlayback()` é o watchdog do outro travamento: o anúncio sai da
+  tela mas o playhead não anda mais, e só o F5 resolve. A causa é o seek pro fim
+  do anúncio caindo fora do que o MSE já baixou — daí `safeSeekTarget()`, que
+  para na borda do buffer. O watchdog só arma dentro de `STALL_OWNERSHIP_MS`
+  depois de uma ação nossa (`markSkipAction()`): travamento fora dessa janela é
+  rede do usuário, e recarregar por isso seria intrometido. Escalada: nudge
+  (voltar 0,25s + `play()`) e, persistindo, `location.reload()` — com trava de no
+  máximo duas recargas por 2min em `sessionStorage`, sem a qual um travamento de
+  outra causa vira loop de reload.
 - `warnStalledAd()` dispara `console.warn` (não gated por `debug`) quando o
   anúncio passa de `CONFIG.stallWarnMs` sem que nada resolva, com dump dos
   candidatos a botão. É o alarme de manutenção — uma vez por anúncio. Nos

@@ -70,6 +70,13 @@
     /** Clicar em "Pular abertura" / "Pular recapitulação" / "Próximo episódio". */
     skipIntros: true,
 
+    /**
+     * Player congelado logo depois de mexermos num anúncio: tenta destravar
+     * (voltar uma fração e mandar tocar) e, se nem assim voltar, recarrega a
+     * página. Só age dentro da janela em que o travamento pode ser culpa nossa.
+     */
+    recoverStalledPlayer: true,
+
     /** Contar anúncios pulados e tempo economizado (chrome.storage.local). */
     collectStats: true,
 
@@ -87,6 +94,15 @@
      * "o site renomeou as classes". 0 desliga.
      */
     stallWarnMs: 10000,
+
+    /**
+     * Playhead parado por isso, com o vídeo tocando e logo depois de mexermos
+     * num anúncio: tenta destravar sem recarregar.
+     */
+    stallRecoverMs: 4000,
+
+    /** Continuou parado por isso: recarrega a página (se recoverStalledPlayer). */
+    stallReloadMs: 12000,
 
     /** Logs no console prefixados com [Pula]. */
     debug: false,
@@ -135,6 +151,13 @@
     video: null,
     /** playbackRate original, guardado antes do fallback de fast-forward. */
     originalRate: null,
+    /** performance.now() da última vez que mexemos no playback por um anúncio. */
+    lastSkipActionAt: 0,
+    /** Último `currentTime` visto e quando ele mudou — base do watchdog. */
+    lastTime: -1,
+    lastProgressAt: 0,
+    /** performance.now() da última tentativa de destravar. */
+    nudgedAt: 0,
     /** Coalescência de mutações num único tick. */
     tickScheduled: false,
   };
@@ -518,6 +541,8 @@
     if (state.video) state.video.removeEventListener('volumechange', onVolumeChange);
     video.addEventListener('volumechange', onVolumeChange);
     state.video = video;
+    // Elemento novo começa parado: sem isto o watchdog leria isso como travamento.
+    resetStallWatch(video);
     log('listener de volume anexado a novo <video>');
   }
 
@@ -557,16 +582,47 @@
    *
    * @returns true se conseguiu de fato adiantar o anúncio.
    */
+  /**
+   * Até onde é seguro largar o playhead.
+   *
+   * Saltar direto pra `duration` é o que trava o player: o vídeo é servido por
+   * MSE, e se o fim do anúncio ainda não estiver no SourceBuffer o player para
+   * esperando um segmento que ele não vai pedir de novo — tela preta ou spinner
+   * eterno, que só o F5 resolve. Enquanto o buffer não alcança o fim, paramos na
+   * borda do que já foi baixado (o fallback de aceleração cobre o resto); quando
+   * alcança, aí sim vamos até `duration`.
+   */
+  function safeSeekTarget(video, duration) {
+    try {
+      const ranges = video.buffered;
+      for (let i = 0; ranges && i < ranges.length; i++) {
+        // Só interessa a faixa que contém o playhead: as outras não ajudam.
+        if (video.currentTime < ranges.start(i) - 0.1 || video.currentTime > ranges.end(i)) continue;
+        const end = ranges.end(i);
+        return end >= duration - 0.25 ? duration : Math.max(video.currentTime, end - 0.1);
+      }
+    } catch (err) {
+      log('buffered indisponível:', err);
+    }
+    return duration;
+  }
+
   function fastForwardAd(video, remaining) {
     if (!can('fastForwardUnskippable') || !video) return false;
 
     const duration = video.duration;
     // Live/DVR e streams ainda sem metadata dão Infinity ou NaN.
     if (!Number.isFinite(duration) || duration <= 0) return false;
-    if (video.currentTime >= duration - 0.15) return false;
+    // Já no fim: se o player deixou o anúncio parado no último frame, mandar
+    // tocar é o que faz o `ended` disparar e a transição pro conteúdo acontecer.
+    if (video.currentTime >= duration - 0.15) {
+      if (video.paused) video.play().catch(() => {});
+      return false;
+    }
 
     try {
-      video.currentTime = duration;
+      video.currentTime = safeSeekTarget(video, duration);
+      markSkipAction();
     } catch (err) {
       log('seek recusado:', err);
     }
@@ -580,6 +636,7 @@
       if (state.originalRate === null) state.originalRate = video.playbackRate;
       if (video.playbackRate !== CONFIG.fastForwardFallbackRate) {
         video.playbackRate = CONFIG.fastForwardFallbackRate;
+        markSkipAction();
         log('seek ignorado — acelerando para', CONFIG.fastForwardFallbackRate + 'x');
       }
       // O anúncio acelerado ainda toca até o fim: economizamos só a fração que
@@ -636,6 +693,116 @@
     const existing = document.getElementById(STYLE_ID);
     if (existing) existing.remove();
     if (siteEnabled()) injectCss();
+  }
+
+  // ───────────────────────────────────────────────────────────────────────────
+  // 5. Watchdog: player congelado depois do skip
+  //
+  // O anúncio some da tela mas o playhead não anda mais — o player ficou preso
+  // num estado de buffering do qual não sai sozinho. Como o gatilho é uma ação
+  // nossa (seek ou aceleração), o watchdog só arma dentro de uma janela curta
+  // depois dela: travamento fora disso é rede do usuário, e recarregar a página
+  // por isso seria intrometido.
+  // ───────────────────────────────────────────────────────────────────────────
+
+  /** Depois disso o travamento não é mais atribuível ao que fizemos. */
+  const STALL_OWNERSHIP_MS = 20000;
+  /** Espaçamento entre tentativas de destravar, pra não ficar serrando o seek. */
+  const NUDGE_INTERVAL_MS = 2500;
+  const RELOAD_MARK_KEY = 'pula:autoReload';
+
+  function markSkipAction() {
+    state.lastSkipActionAt = performance.now();
+  }
+
+  /** Zera a contagem de progresso — vídeo novo ou navegação não é travamento. */
+  function resetStallWatch(video) {
+    state.lastTime = video ? video.currentTime : -1;
+    state.lastProgressAt = performance.now();
+    state.nudgedAt = 0;
+  }
+
+  /**
+   * Destrava sem recarregar: voltar uma fração faz o player pedir o segmento de
+   * novo, e o `play()` cobre o caso de ele ter parado no último frame.
+   */
+  function nudgePlayback(video) {
+    log('playhead parado depois do anúncio — tentando destravar');
+    try {
+      video.currentTime = Math.max(0, video.currentTime - 0.25);
+    } catch (err) {
+      log('nudge: seek recusado', err);
+    }
+    video.play().catch(() => {});
+  }
+
+  /**
+   * Último recurso. A trava de loop é obrigatória: se o motivo do travamento não
+   * for o anúncio (rede caída, vídeo com erro, sessão expirada), recarregar sem
+   * parar é bem pior que a tela travada. Duas recargas por janela de 2min e
+   * depois desistimos — daí em diante o F5 é seu.
+   */
+  function reloadPage() {
+    const now = Date.now();
+    let mark = { n: 0, at: now };
+    try {
+      const parsed = JSON.parse(sessionStorage.getItem(RELOAD_MARK_KEY) || 'null');
+      if (parsed && now - parsed.at < 120000) mark = parsed;
+    } catch {
+      /* sessionStorage pode estar bloqueado (cookies de terceiros em iframe) */
+    }
+
+    if (mark.n >= 2) {
+      // Sem gate de debug de propósito: é a explicação de por que a página
+      // recarregou duas vezes e agora não recarrega mais.
+      console.warn(
+        `[Pula:${adapter.id}] player travado de novo depois de ${mark.n} recargas — ` +
+          'desistindo do reload automático. O travamento provavelmente não é do anúncio.',
+      );
+      return;
+    }
+
+    try {
+      sessionStorage.setItem(RELOAD_MARK_KEY, JSON.stringify({ n: mark.n + 1, at: mark.at }));
+    } catch {
+      /* sem sessionStorage não há trava de loop — ver guarda de janela abaixo */
+    }
+    console.warn(`[Pula:${adapter.id}] player travado depois do anúncio — recarregando a página.`);
+    location.reload();
+  }
+
+  function watchStalledPlayback(video) {
+    const now = performance.now();
+
+    // Pausado ou terminado não é travamento. `seeking` de propósito NÃO entra
+    // aqui: seek para um trecho que o MSE não tem é exatamente o modo de falha
+    // que estamos caçando — ele fica pendente para sempre, e ignorá-lo cegaria o
+    // watchdog no caso mais comum. Um seek normal resolve muito antes de
+    // `stallRecoverMs`.
+    if (!video || video.paused || video.ended) {
+      resetStallWatch(video);
+      return;
+    }
+
+    if (Math.abs(video.currentTime - state.lastTime) > 0.01) {
+      resetStallWatch(video);
+      return;
+    }
+
+    if (!can('recoverStalledPlayer')) return;
+    if (!state.lastSkipActionAt || now - state.lastSkipActionAt > STALL_OWNERSHIP_MS) return;
+
+    const stalledFor = now - state.lastProgressAt;
+    if (stalledFor < CONFIG.stallRecoverMs) return;
+
+    if (stalledFor < CONFIG.stallReloadMs) {
+      if (now - state.nudgedAt < NUDGE_INTERVAL_MS) return;
+      state.nudgedAt = now;
+      nudgePlayback(video);
+      return;
+    }
+
+    reloadPage();
   }
 
   // ───────────────────────────────────────────────────────────────────────────
@@ -699,6 +866,7 @@
     attachVideoListeners();
 
     const video = state.video;
+    watchStalledPlayback(video);
     const adShowing = !!adapter.isAdShowing(ctx);
 
     if (adShowing) {
@@ -719,6 +887,9 @@
       // Cada caminho contabiliza o que economizou — `countAd` ignora o segundo.
       if (!handled) {
         if (can('clickSkipButton') && clickSkipButton()) {
+          // O clique também é uma transição forçada: o player pode engasgar nela
+          // do mesmo jeito que engasga no seek.
+          markSkipAction();
           countAd(remaining);
         } else {
           // Só adianta o playhead se não deu pra pular. Barato o suficiente pra
@@ -843,6 +1014,9 @@
         if (state.mutedByUs) restoreAudio(state.video);
         restorePlaybackRate(state.video);
         state.adActive = false;
+        // Vídeo trocando: o playhead parado agora é a navegação, não travamento.
+        state.lastSkipActionAt = 0;
+        resetStallWatch(state.video);
         if (typeof adapter.onNavigate === 'function') adapter.onNavigate(ctx);
         scheduleTick();
       },
